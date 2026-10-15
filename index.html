@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Galeria de Imagens</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+        .gallery {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            transition: opacity 1s ease-in-out;
+        }
+        img.active {
+            display: block;
+        }
+        .contador {
+            font-size: 20px;
+            font-family: "calibri light", sans-serif;
+            font-style: italic;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: black;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="gallery" id="gallery"></div>
+    <p class="contador" id="tempo-restante"></p>
+
+    <script>
+        const galleryElemento = document.getElementById('gallery');
+        const contadorElemento = document.getElementById('tempo-restante');
+
+        // Lista de imagens com nomes sem acento e minúsculos para evitar problemas
+        const imagens = [
+            "5ª Cerimônia de Formatura.jpg",
+            "Nova semana, novas conquistas e bônus.png",
+            "Resultados diários de 05 a 09_10.png",
+            "Parcial da semana_ rumo à meta (1).png",
+            "Resultados diários Todo Dia Tem Mais! (1).png",
+            "codigo.jpg",
+           
+            
+
+
+
+
+
+
+
+
+
+
+
+            
+            
+        
+        
+            
+        ];
+
+        let indiceAtual = 0;
+        let segundosRestantes = 15;
+
+        function obterHoraBrasilia() {
+            const options = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const formatter = new Intl.DateTimeFormat('pt-BR', options);
+            const horarioBrasilia = new Date();
+            return formatter.format(horarioBrasilia);
+        }
+
+        // Carrega as imagens no container, com cache busting para garantir atualização
+        function carregarImagens() {
+            return new Promise((resolve) => {
+                imagens.forEach((src, index) => {
+                    const imgElement = document.createElement('img');
+                    imgElement.src = src + '?v=' + Date.now();
+
+                    if (index === 0) {
+                        imgElement.classList.add('active');
+                    }
+                    galleryElemento.appendChild(imgElement);
+
+                    // Log para cada imagem carregada
+                    imgElement.onload = () => console.log(`Imagem carregada: ${src}`);
+                    imgElement.onerror = () => console.error(`Erro ao carregar imagem: ${src}`);
+                });
+                resolve();
+            });
+        }
+
+        // Atualiza a imagem visível e o contador de segundos
+        function atualizarImagem() {
+            const todasImagens = galleryElemento.getElementsByTagName('img');
+            Array.from(todasImagens).forEach((img, index) => {
+                img.classList.remove('active');
+                if (index === indiceAtual) {
+                    img.classList.add('active');
+                }
+            });
+            contadorElemento.textContent = `${segundosRestantes} segundos`;
+        }
+
+        // Função principal que inicia a galeria
+        function iniciarGaleria() {
+            console.log("Iniciando galeria com " + imagens.length + " imagens.");
+
+            carregarImagens().then(() => {
+                atualizarImagem();
+
+                // Intervalo para atualizar contador e trocar imagem a cada 15 segundos
+                setInterval(() => {
+                    segundosRestantes--;
+
+                    if (segundosRestantes <= 0) {
+                        indiceAtual = (indiceAtual + 1) % imagens.length;
+                        segundosRestantes = 15;
+                        atualizarImagem();
+                    } else {
+                        contadorElemento.textContent = `${segundosRestantes} segundos`;
+                    }
+                }, 1000);
+
+                // Intervalo para reiniciar galeria a cada 14 minutos em ponto (minuto % 14 === 0 e segundo === 0)
+                setInterval(() => {
+                    const horaBrasilia = obterHoraBrasilia();
+                    const [hora, minuto, segundo] = horaBrasilia.split(':').map(Number);
+
+                    if (minuto % 14 === 0 && segundo === 0) {
+                        indiceAtual = 0;
+                        segundosRestantes = 15;
+                        atualizarImagem();
+                        console.log('Galeria reiniciada automaticamente no minuto múltiplo de 14');
+                    }
+                }, 1000);
+            });
+        }
+
+        iniciarGaleria();
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
