@@ -141,23 +141,23 @@
 
                     if (segundosRestantes <= 0) {
                         indiceAtual = (indiceAtual + 1) % imagens.length;
-                        segundosRestantes = 15;
+                        segundosRestantes = 10;
                         atualizarImagem();
                     } else {
                         contadorElemento.textContent = `${segundosRestantes} segundos`;
                     }
                 }, 1000);
 
-                // Intervalo para reiniciar galeria a cada 14 minutos em ponto (minuto % 14 === 0 e segundo === 0)
+                // Intervalo para reiniciar galeria a cada 10 minutos em ponto (minuto % 10 === 0 e segundo === 0)
                 setInterval(() => {
                     const horaBrasilia = obterHoraBrasilia();
                     const [hora, minuto, segundo] = horaBrasilia.split(':').map(Number);
 
-                    if (minuto % 14 === 0 && segundo === 0) {
+                    if (minuto % 10 === 0 && segundo === 0) {
                         indiceAtual = 0;
                         segundosRestantes = 10;
                         atualizarImagem();
-                        console.log('Galeria reiniciada automaticamente no minuto múltiplo de 14');
+                        console.log('Galeria reiniciada automaticamente no minuto múltiplo de 10');
                     }
                 }, 1000);
             });
