@@ -1,12 +1,16 @@
-// Gerado em 25/11/2026 10:38:46 — não edite à mão.
+// Gerado pelo Painel das TVs em 25/11/2026, 10:40:47 — não edite à mão.
 window.TV_PLAYLIST = {
-  "versao": "2026-11-25T10:38:46-03:00",
-  "geradoEm": "25/11/2026 10:38:46",
-  "duracaoPadrao": 15,
-  "intervaloVerificacao": 60,
+  "versao": "2026-11-25T13:40:47.351Z",
+  "geradoEm": "25/11/2026, 10:40:47",
+  "duracaoPadrao": 12,
+  "intervaloVerificacao": 10,
   "ajuste": "cobrir",
   "recarregarTela": "1795613018258",
   "itens": [
+    {
+      "arquivo": "imagens/flash1811.png",
+      "titulo": "flash1811"
+    },
     {
       "arquivo": "aniversariantes-cobranca-2026-11-25.png",
       "titulo": "aniversariantes-cobranca-2026-11-25"
@@ -42,14 +46,6 @@ window.TV_PLAYLIST = {
     {
       "arquivo": "semana-premiada.png",
       "titulo": "semana-premiada"
-    },
-    {
-      "arquivo": "flash1811.png",
-      "titulo": "flash1811"
-    },
-    {
-      "arquivo": "imagem.jpeg",
-      "titulo": "imagem"
     }
   ]
 };
