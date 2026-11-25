@@ -1,10 +1,11 @@
-// Gerado pelo Painel das TVs em 25/11/2026 13:30:00 — não edite à mão.
+// Gerado pelo Painel das TVs em 25/11/2026, 10:23:38 — não edite à mão.
 window.TV_PLAYLIST = {
-  "versao": "2026-11-25T16:30:00.000Z",
-  "geradoEm": "25/11/2026 13:30:00",
+  "versao": "2026-11-25T13:23:38.258Z",
+  "geradoEm": "25/11/2026, 10:23:38",
   "duracaoPadrao": 15,
   "intervaloVerificacao": 60,
   "ajuste": "cobrir",
+  "recarregarTela": "1795613018258",
   "itens": [
     {
       "arquivo": "aniversariantes-cobranca-2026-11-25.png",
