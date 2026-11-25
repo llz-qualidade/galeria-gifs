@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel das TVs — Cobrança</title>
+<style>
+  :root { --azul:#1f4e79; --cinza:#f3f5f8; --borda:#d8dde5; --texto:#1d2430; --suave:#5d6878; --verde:#2e7d32; --vermelho:#c62828; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 "Segoe UI", Arial, sans-serif; color: var(--texto); background: var(--cinza); }
+  header { background: var(--azul); color: #fff; padding: 16px 28px; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header p { margin: 4px 0 0; opacity: .85; font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  section { background: #fff; border: 1px solid var(--borda); border-radius: 8px; padding: 18px 20px; margin-bottom: 18px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .linha { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  label { display: flex; flex-direction: column; font-size: 12px; color: var(--suave); gap: 4px; }
+  input[type=text], input[type=number], input[type=date], select { font: inherit; padding: 6px 8px; border: 1px solid var(--borda); border-radius: 5px; color: var(--texto); }
+  input[type=number] { width: 90px; }
+  button { font: inherit; padding: 8px 14px; border-radius: 6px; border: 1px solid var(--borda); background: #fff; cursor: pointer; }
+  button:hover { background: #eef2f7; }
+  button.primario { background: var(--azul); color: #fff; border-color: var(--azul); font-weight: 600; }
+  button.primario:hover { background: #173b5c; }
+  button.perigo { color: var(--vermelho); }
+  #soltar { border: 2px dashed var(--borda); border-radius: 8px; padding: 26px; text-align: center; color: var(--suave); cursor: pointer; }
+  #soltar.sobre { border-color: var(--azul); background: #eef4fb; }
+  .item { display: grid; grid-template-columns: 34px 150px 1fr auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--borda); }
+  .item:first-child { border-top: 0; }
+  .item.inativo { opacity: .55; }
+  .num { font-weight: 700; color: var(--suave); text-align: center; }
+  .thumb { width: 150px; height: 84px; background: #111; border-radius: 4px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #999; font-size: 11px; text-align: center; }
+  .thumb img, .thumb video { width: 100%; height: 100%; object-fit: contain; }
+  .nome { font-weight: 600; word-break: break-all; }
+  .acoes { display: flex; flex-direction: column; gap: 4px; }
+  .acoes button { padding: 3px 10px; font-size: 13px; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 10px; margin-left: 6px; font-weight: 600; }
+  .tag.ok { background: #e6f4ea; color: var(--verde); }
+  .tag.fora { background: #fdecea; color: var(--vermelho); }
+  .tag.agendado { background: #fff4e0; color: #a15c00; }
+  .aviso { color: #a15c00; font-size: 12px; margin-top: 4px; }
+  .resumo { color: var(--suave); font-size: 13px; }
+  ol.passos { margin: 6px 0 0; padding-left: 20px; color: var(--suave); font-size: 13px; }
+  #msg { position: fixed; right: 20px; bottom: 20px; background: var(--texto); color: #fff; padding: 10px 16px; border-radius: 6px; opacity: 0; transition: opacity .3s; }
+  #msg.on { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Painel das TVs — Cobrança</h1>
+  <p>Monte a sequência de imagens, gere o <b>playlist.js</b> e salve na pasta das TVs. Todas as TVs se atualizam sozinhas.</p>
+</header>
+<main>
+
+<section>
+  <h2>1. Carregar a sequência atual</h2>
+  <div class="linha">
+    <button id="btnServidor">Recarregar sequência desta pasta</button>
+    <button id="btnImportar">Abrir playlist.js de outro lugar</button>
+    <input type="file" id="arqPlaylist" accept=".js,.json" hidden>
+    <span class="resumo" id="origem">Nenhuma sequência carregada — você pode começar do zero adicionando imagens abaixo.</span>
+  </div>
+</section>
+
+<section>
+  <h2>2. Adicionar imagens ou vídeos</h2>
+  <div id="soltar">Arraste as imagens aqui ou <u>clique para escolher</u><br><small>JPG, PNG, WEBP ou vídeo MP4 (sem som). Ideal: 1920×1080 (16:9).</small></div>
+  <input type="file" id="arqMidia" accept="image/*,video/mp4,video/webm" multiple hidden>
+</section>
+
+<section>
+  <h2>3. Sequência de exibição <span class="resumo" id="resumo"></span></h2>
+  <div id="lista"></div>
+</section>
+
+<section>
+  <h2>4. Configurações gerais</h2>
+  <div class="linha">
+    <label>Pasta das imagens (dentro da pasta das TVs)<input type="text" id="cfgPasta" value="imagens/"></label>
+    <label>Tempo padrão por imagem (s)<input type="number" id="cfgDuracao" min="3" value="12"></label>
+    <label>TVs verificam novidades a cada (s)<input type="number" id="cfgIntervalo" min="10" value="60"></label>
+    <label>Enquadramento
+      <select id="cfgAjuste"><option value="conter">Imagem inteira (faixas pretas se preciso)</option><option value="cobrir">Preencher a tela (pode cortar bordas)</option></select>
+    </label>
+  </div>
+</section>
+
+<section>
+  <h2>5. Publicar</h2>
+  <div class="linha" style="margin-bottom:12px">
+    <button id="btnPasta">📁 Escolher a pasta das TVs</button>
+    <span class="resumo" id="pastaStatus">Nenhuma pasta escolhida — escolha a pasta onde está o <b>tv.html</b> (só na primeira vez).</span>
+  </div>
+  <div class="linha">
+    <button class="primario" id="btnGerar">Publicar nas TVs</button>
+    <button id="btnForcar" title="Use apenas quando o arquivo tv.html for alterado">Publicar + forçar recarregar as TVs</button>
+  </div>
+  <div id="passosGithub" style="display:none;margin-top:14px;padding:14px 16px;background:#eef4fb;border-radius:8px">
+    <b>Site no GitHub — 2 passos:</b>
+    <ol class="passos" style="color:var(--texto)">
+      <li>Escolha (uma vez) uma pasta no seu computador, ex.: <b>Área de Trabalho\TV publicar</b>, e clique em <b>Publicar nas TVs</b>. O painel grava ali o <b>playlist.js</b> e as imagens novas.</li>
+      <li>Clique em <button id="btnUpload" type="button">Abrir envio no GitHub ↗</button>, arraste <b>tudo</b> o que está nessa pasta (o arquivo playlist.js e a pasta imagens) e clique em <b>Commit changes</b>.</li>
+    </ol>
+    <span class="resumo">Em 1 a 2 minutos todas as TVs mostram a nova sequência — sem tocar nelas.</span>
+  </div>
+  <ol class="passos" id="passosAuto">
+    <li>O painel grava o <b>playlist.js</b> e copia as <b>imagens novas</b> para <code id="pastaTxt">imagens/</code> automaticamente.</li>
+    <li>Em até ~1 minuto (+ o tempo do slide em exibição) todas as TVs mostram a nova sequência.</li>
+  </ol>
+  <ol class="passos" id="passosManual" style="display:none">
+    <li>Seu navegador não permite gravar direto na pasta (use Chrome ou Edge para isso). O arquivo será baixado.</li>
+    <li>Antes de publicar, apague os playlist*.js antigos da pasta Downloads, para o nome sair exatamente <b>playlist.js</b>.</li>
+    <li>Copie o playlist.js e as imagens novas para a pasta das TVs.</li>
+  </ol>
+</section>
+</main>
+<div id="msg"></div>
+
+<script>
+const estado = { itens: [], recarregarTela: null };
+const $ = id => document.getElementById(id);
+const hoje = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const ehVideo = n => /\.(mp4|webm|ogg)$/i.test(n);
+const pasta = () => { let p = $('cfgPasta').value.trim(); if (p && !p.endsWith('/')) p += '/'; return p; };
+function aviso(t) { const m = $('msg'); m.textContent = t; m.classList.add('on'); setTimeout(() => m.classList.remove('on'), 6000); }
+
+// ---------- carregar ----------
+function aplicarPlaylist(pl, origem) {
+  if (!pl || !Array.isArray(pl.itens)) { alert('Arquivo inválido: não encontrei a lista "itens".'); return; }
+  estado.itens = pl.itens.map(i => ({ ...i, previa: null }));
+  estado.recarregarTela = pl.recarregarTela || null;
+  if (pl.duracaoPadrao) $('cfgDuracao').value = pl.duracaoPadrao;
+  if (pl.intervaloVerificacao) $('cfgIntervalo').value = pl.intervaloVerificacao;
+  if (pl.ajuste) $('cfgAjuste').value = pl.ajuste;
+  const primeira = pl.itens.find(i => i.arquivo && i.arquivo.includes('/'));
+  if (primeira) $('cfgPasta').value = primeira.arquivo.replace(/[^/]*$/, '');
+  $('origem').textContent = `${origem} — versão ${pl.versao || '?'} · ${pl.itens.length} item(ns)`;
+  render();
+}
+function carregarServidor(silencioso) {
+  // lê o playlist.js da mesma pasta — funciona aberto por duplo clique (file://) e por servidor (http://)
+  const velho = document.getElementById('scriptPlaylist'); if (velho) velho.remove();
+  window.TV_PLAYLIST = undefined;
+  const sc = document.createElement('script'); sc.id = 'scriptPlaylist';
+  sc.onload = () => window.TV_PLAYLIST ? aplicarPlaylist(window.TV_PLAYLIST, 'Carregado desta pasta')
+                                       : (!silencioso && alert('O playlist.js desta pasta está com erro. Gere um novo pelo botão "Gerar".'));
+  sc.onerror = () => { if (!silencioso) alert('Não encontrei o playlist.js na mesma pasta deste painel. Use "Abrir playlist.js de outro lugar" ou comece adicionando imagens.'); };
+  sc.src = 'playlist.js?_=' + Date.now();
+  document.head.appendChild(sc);
+}
+$('btnServidor').onclick = () => carregarServidor(false);
+$('btnImportar').onclick = () => $('arqPlaylist').click();
+$('arqPlaylist').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  f.text().then(t => {
+    try { aplicarPlaylist(JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)), 'Aberto de ' + f.name); }
+    catch { alert('Não consegui ler esse arquivo. Gere um novo pelo botão "Gerar".'); }
+  });
+  e.target.value = '';
+};
+
+// ---------- adicionar mídia ----------
+function adicionarArquivos(files) {
+  let n = 0;
+  [...files].forEach(f => {
+    if (!/^image\/|^video\//.test(f.type)) return;
+    estado.itens.push({ arquivo: pasta() + f.name, titulo: f.name.replace(/\.[^.]+$/, ''), duracao: null,
+                        inicio: '', fim: '', ativo: true, previa: URL.createObjectURL(f), file: f });
+    n++;
+  });
+  if (n) { render(); aviso(`${n} arquivo(s) adicionado(s) ao final da sequência`); }
+}
+const zona = $('soltar');
+zona.onclick = () => $('arqMidia').click();
+$('arqMidia').onchange = e => { adicionarArquivos(e.target.files); e.target.value = ''; };
+zona.ondragover = e => { e.preventDefault(); zona.classList.add('sobre'); };
+zona.ondragleave = () => zona.classList.remove('sobre');
+zona.ondrop = e => { e.preventDefault(); zona.classList.remove('sobre'); adicionarArquivos(e.dataTransfer.files); };
+$('cfgPasta').oninput = () => { $('pastaTxt').textContent = pasta() || '(raiz)'; };
+
+// ---------- lista ----------
+function situacao(it) {
+  const h = hoje();
+  if (it.ativo === false) return ['fora', 'Desligado'];
+  if (it.inicio && h < it.inicio) return ['agendado', 'Agendado'];
+  if (it.fim && h > it.fim) return ['fora', 'Expirado'];
+  return ['ok', 'No ar'];
+}
+function render() {
+  const L = $('lista'); L.innerHTML = '';
+  const nomes = {};
+  estado.itens.forEach(i => nomes[i.arquivo] = (nomes[i.arquivo] || 0) + 1);
+  if (!estado.itens.length) L.innerHTML = '<p class="resumo">Nenhum item ainda.</p>';
+  estado.itens.forEach((it, idx) => {
+    const [cls, txt] = situacao(it);
+    const div = document.createElement('div');
+    div.className = 'item' + (cls === 'ok' ? '' : ' inativo');
+    const src = it.previa || it.arquivo + '?_=' + Date.now();
+    const thumb = ehVideo(it.arquivo) ? `<video src="${src}" muted></video>` : `<img src="${src}" onerror="this.replaceWith('prévia indisponível')">`;
+    const avisos = [];
+    if (nomes[it.arquivo] > 1) avisos.push('Arquivo repetido na sequência.');
+    if (it.erro) avisos.push('Não foi possível copiar esta imagem — remova e adicione de novo.');
+    if (/[^\w.\-\/]/.test(it.arquivo.split('/').pop())) avisos.push('Dica: evite espaços e acentos no nome do arquivo.');
+    div.innerHTML = `
+      <div class="num">${idx + 1}</div>
+      <div class="thumb">${thumb}</div>
+      <div>
+        <div class="nome">${esc(it.arquivo)} <span class="tag ${cls}">${txt}</span></div>
+        <div class="linha" style="margin-top:8px">
+          <label>Título (interno)<input type="text" data-k="titulo" value="${esc(it.titulo || '')}"></label>
+          <label>Tempo (s)<input type="number" min="3" data-k="duracao" placeholder="padrão" value="${it.duracao || ''}"></label>
+          <label>Exibir a partir de<input type="date" data-k="inicio" value="${it.inicio || ''}"></label>
+          <label>Exibir até<input type="date" data-k="fim" value="${it.fim || ''}"></label>
+          <label>Ligado<input type="checkbox" data-k="ativo" ${it.ativo === false ? '' : 'checked'}></label>
+        </div>
+        ${avisos.map(a => `<div class="aviso">⚠ ${a}</div>`).join('')}
+      </div>
+      <div class="acoes">
+        <button data-a="sobe" ${idx === 0 ? 'disabled' : ''}>▲ Subir</button>
+        <button data-a="desce" ${idx === estado.itens.length - 1 ? 'disabled' : ''}>▼ Descer</button>
+        <button data-a="remove" class="perigo">Remover</button>
+      </div>`;
+    div.querySelectorAll('[data-k]').forEach(inp => inp.onchange = () => {
+      const k = inp.dataset.k;
+      it[k] = k === 'ativo' ? inp.checked : k === 'duracao' ? (parseInt(inp.value) || null) : inp.value;
+      render();
+    });
+    div.querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+      const a = b.dataset.a, arr = estado.itens;
+      if (a === 'sobe') [arr[idx-1], arr[idx]] = [arr[idx], arr[idx-1]];
+      if (a === 'desce') [arr[idx+1], arr[idx]] = [arr[idx], arr[idx+1]];
+      if (a === 'remove' && confirm('Remover este item da sequência? (o arquivo no servidor não é apagado)')) arr.splice(idx, 1);
+      render();
+    });
+    L.appendChild(div);
+  });
+  const noAr = estado.itens.filter(i => situacao(i)[0] === 'ok');
+  const padrao = parseInt($('cfgDuracao').value) || 12;
+  const ciclo = noAr.reduce((s, i) => s + (i.duracao || padrao), 0);
+  $('resumo').textContent = estado.itens.length ? `— ${noAr.length} no ar hoje · ciclo completo ≈ ${Math.floor(ciclo/60)}min ${ciclo%60}s` : '';
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+
+// ---------- gerar ----------
+function gerar(forcar) {
+  if (!estado.itens.length) { alert('A sequência está vazia.'); return; }
+  const agora = new Date();
+  const pl = {
+    versao: agora.toISOString(),
+    geradoEm: agora.toLocaleString('pt-BR'),
+    duracaoPadrao: parseInt($('cfgDuracao').value) || 12,
+    intervaloVerificacao: Math.max(10, parseInt($('cfgIntervalo').value) || 60),
+    ajuste: $('cfgAjuste').value,
+    recarregarTela: forcar ? String(Date.now()) : estado.recarregarTela,
+    itens: estado.itens.map(({ previa, file, ...i }) => {
+      const o = { arquivo: i.arquivo };
+      if (i.titulo) o.titulo = i.titulo;
+      if (i.duracao) o.duracao = i.duracao;
+      if (i.inicio) o.inicio = i.inicio;
+      if (i.fim) o.fim = i.fim;
+      if (i.ativo === false) o.ativo = false;
+      return o;
+    })
+  };
+  if (!pl.recarregarTela) delete pl.recarregarTela;
+  estado.recarregarTela = pl.recarregarTela || null;
+  const conteudo = '// Gerado pelo Painel das TVs em ' + pl.geradoEm + ' — não edite à mão.\n' +
+                   'window.TV_PLAYLIST = ' + JSON.stringify(pl, null, 2) + ';\n';
+  publicar(conteudo, forcar);
+}
+
+// ---------- gravar direto na pasta das TVs (Chrome/Edge) ----------
+const podeGravar = 'showDirectoryPicker' in window;
+// Site hospedado no GitHub Pages: publica numa pasta do computador e depois envia ao GitHub
+const NO_GITHUB = /\.github\.io$/i.test(location.hostname);
+const REPO = NO_GITHUB ? 'https://github.com/' + location.hostname.split('.')[0] + '/' + (location.pathname.split('/')[1] || '') : '';
+let pastaTVs = null;
+function idb(acao, valor) {
+  return new Promise(res => {
+    try {
+      const req = indexedDB.open('painel-tvs', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('cfg');
+      req.onsuccess = () => {
+        const tx = req.result.transaction('cfg', acao === 'ler' ? 'readonly' : 'readwrite').objectStore('cfg');
+        const op = acao === 'ler' ? tx.get('pasta') : tx.put(valor, 'pasta');
+        op.onsuccess = () => res(op.result); op.onerror = () => res(null);
+      };
+      req.onerror = () => res(null);
+    } catch { res(null); }
+  });
+}
+function mostrarPasta() {
+  $('pastaStatus').innerHTML = pastaTVs ? `Pasta das TVs: <b>${esc(pastaTVs.name)}</b> ✔` :
+    'Nenhuma pasta escolhida — escolha a pasta onde está o <b>tv.html</b> (só na primeira vez).';
+}
+async function permissao(h) {
+  const o = { mode: 'readwrite' };
+  if (await h.queryPermission(o) === 'granted') return true;
+  return await h.requestPermission(o) === 'granted';
+}
+async function escolherPasta() {
+  try {
+    const h = await window.showDirectoryPicker({ id: 'pasta-tvs', mode: 'readwrite' });
+    let temPlayer = false;
+    for (const n of ['index.html', 'tv.html', 'playlist.js']) { try { await h.getFileHandle(n); temPlayer = true; break; } catch {} }
+    if (!temPlayer && !NO_GITHUB && !confirm(`A pasta "${h.name}" não tem o tv.html. Usar mesmo assim?`)) return null;
+    pastaTVs = h; await idb('gravar', h); mostrarPasta();
+    await lerPlaylistDaPasta();
+    return h;
+  } catch { return null; } // cancelou
+}
+async function lerPlaylistDaPasta() {
+  try {
+    const f = await (await pastaTVs.getFileHandle('playlist.js')).getFile();
+    const t = await f.text();
+    if (!estado.itens.length) aplicarPlaylist(JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)), 'Carregado da pasta ' + pastaTVs.name);
+  } catch {}
+}
+async function gravarArquivo(dir, caminho, dados) {
+  const partes = caminho.split('/').filter(Boolean);
+  const nome = partes.pop();
+  for (const p of partes) dir = await dir.getDirectoryHandle(p, { create: true });
+  const w = await (await dir.getFileHandle(nome, { create: true })).createWritable();
+  await w.write(dados); await w.close();
+}
+async function publicar(conteudo, forcar) {
+  if (!podeGravar) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([conteudo], { type: 'text/javascript' })); a.download = 'playlist.js'; a.click();
+    aviso('playlist.js baixado — copie para a pasta das TVs com esse nome exato');
+    return;
+  }
+  if (!pastaTVs && !(await escolherPasta())) return;
+  if (!(await permissao(pastaTVs))) { alert('Sem permissão para gravar na pasta. Clique em Publicar de novo e permita.'); return; }
+
+  // 1) a pasta escolhida antes ainda existe? (some se foi apagada, movida ou descompactada de novo)
+  try { for await (const _ of pastaTVs.keys()) break; }
+  catch {
+    pastaTVs = null; await idb('gravar', null); mostrarPasta();
+    alert('A pasta das TVs escolhida antes não existe mais (foi movida, renomeada ou recriada).\nEscolha a pasta do tv.html novamente.');
+    if (!(await escolherPasta()) || !(await permissao(pastaTVs))) return;
+  }
+
+  // 2) copiar imagens novas (pula as que já estão lá iguais)
+  const problemas = []; let n = 0;
+  for (const it of estado.itens) {
+    if (!it.file) continue;
+    if (await existeIgual(pastaTVs, it.arquivo, it.file)) { delete it.file; continue; }
+    try { await gravarArquivo(pastaTVs, it.arquivo, it.file); delete it.file; n++; }
+    catch (e) { problemas.push(it); }
+  }
+  if (problemas.length) {
+    alert('Não consegui copiar estas imagens:\n\n• ' + problemas.map(i => i.arquivo.split('/').pop()).join('\n• ') +
+          '\n\nProvável causa: o arquivo original foi movido, renomeado ou apagado depois de ser adicionado ao painel.' +
+          '\nRemova esses itens da sequência e adicione as imagens de novo. Nada foi publicado ainda.');
+    problemas.forEach(i => i.erro = true); render();
+    return;
+  }
+
+  // 3) por último a lista: as TVs só veem a sequência nova quando as imagens já estão lá
+  try {
+    await gravarArquivo(pastaTVs, 'playlist.js', conteudo);
+  } catch (e) {
+    alert('As imagens foram copiadas, mas não consegui gravar o playlist.js na pasta "' + pastaTVs.name + '".\n' +
+          'Detalhe: ' + e.message + '\nVerifique se você tem permissão de escrita nela ou escolha a pasta de novo (botão 📁).');
+    return;
+  }
+  aviso(NO_GITHUB ? `Pronto na pasta "${pastaTVs.name}". Agora envie ao GitHub (passo 2).`
+                  : `Publicado em "${pastaTVs.name}"${n ? ` (+${n} imagem(ns) copiada(s))` : ''}. As TVs atualizam em ~1 min.${forcar ? ' Recarga forçada.' : ''}`);
+  if (NO_GITHUB) setTimeout(() => { if (confirm('playlist.js pronto na pasta "' + pastaTVs.name + '".\n\nAbrir agora a página de envio do GitHub?')) window.open(REPO + '/upload/main', '_blank'); }, 300);
+  $('origem').textContent = `Publicado em ${new Date().toLocaleString('pt-BR')} na pasta ${pastaTVs.name}`;
+}
+async function existeIgual(dir, caminho, file) {
+  try {
+    const partes = caminho.split('/').filter(Boolean); const nome = partes.pop();
+    for (const p of partes) dir = await dir.getDirectoryHandle(p);
+    const atual = await (await dir.getFileHandle(nome)).getFile();
+    return atual.size === file.size;
+  } catch { return false; }
+}
+$('btnPasta').onclick = escolherPasta;
+if (NO_GITHUB) {
+  $('passosGithub').style.display = ''; $('passosAuto').style.display = 'none';
+  $('btnUpload').onclick = () => window.open(REPO + '/upload/main', '_blank');
+  $('btnPasta').textContent = '📁 Escolher a pasta de publicação (no seu computador)';
+}
+if (!podeGravar) { $('btnPasta').style.display = 'none'; $('pastaStatus').style.display = 'none'; $('passosAuto').style.display = 'none'; $('passosManual').style.display = ''; }
+else idb('ler').then(h => { if (h) { pastaTVs = h; mostrarPasta(); } });
+$('btnGerar').onclick = () => gerar(false);
+$('btnForcar').onclick = () => gerar(true);
+$('cfgDuracao').onchange = render;
+render();
+carregarServidor(true);
+</script>
+</body>
+</html>
