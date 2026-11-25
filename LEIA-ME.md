@@ -9,7 +9,14 @@
 4. Em cada TV, **atualize a página uma última vez** (ou desligue e ligue a TV). Aperte **OK** no controle para tela cheia.
    A partir daí, nunca mais precisa mexer nas TVs.
 
-## Dia a dia (Chrome ou Edge no seu computador)
+## Dia a dia — direto no GitHub (mais simples)
+
+- **Colocar imagem:** Adicionar arquivo → Upload files → arraste a imagem → Confirmar alterações.
+  Ela entra no fim da sequência sozinha (automação do GitHub) e aparece nas TVs em ~2 minutos.
+- **Tirar imagem:** clique na imagem no GitHub → menu **⋯** (canto direito) → **Excluir arquivo** → Confirmar alterações.
+- Prefira nomes sem espaço/símbolos: `campanha-natal.png`.
+
+## Ajustes finos (ordem, tempo, datas) — pelo painel
 
 1. Abra https://llz-qualidade.github.io/galeria-gifs/admin.html — ele já mostra o que está no ar.
 2. Adicione/remova artes, ajuste ordem, tempo e datas ("Exibir até" tira a arte do ar sozinha).
