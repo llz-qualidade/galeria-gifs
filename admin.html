@@ -290,8 +290,9 @@ function idb(acao, valor) {
   });
 }
 function mostrarPasta() {
-  $('pastaStatus').innerHTML = pastaTVs ? `Pasta das TVs: <b>${esc(pastaTVs.name)}</b> ✔` :
-    'Nenhuma pasta escolhida — escolha a pasta onde está o <b>tv.html</b> (só na primeira vez).';
+  $('pastaStatus').innerHTML = pastaTVs ? `${NO_GITHUB ? 'Pasta de publicação' : 'Pasta das TVs'}: <b>${esc(pastaTVs.name)}</b> ✔` :
+    (NO_GITHUB ? 'Nenhuma pasta escolhida — crie uma pasta vazia (ex.: <b>TV publicar</b> na Área de Trabalho) e escolha-a (só na primeira vez).'
+               : 'Nenhuma pasta escolhida — escolha a pasta onde está o <b>tv.html</b> (só na primeira vez).');
 }
 async function permissao(h) {
   const o = { mode: 'readwrite' };
@@ -380,6 +381,7 @@ async function existeIgual(dir, caminho, file) {
 }
 $('btnPasta').onclick = escolherPasta;
 if (NO_GITHUB) {
+  mostrarPasta();
   $('passosGithub').style.display = ''; $('passosAuto').style.display = 'none';
   $('btnUpload').onclick = () => window.open(REPO + '/upload/main', '_blank');
   $('btnPasta').textContent = '📁 Escolher a pasta de publicação (no seu computador)';
